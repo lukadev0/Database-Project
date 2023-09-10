@@ -1,20 +1,20 @@
 import matplotlib.pyplot as plt
 import pandas as pd
 
-# Leggi i dati dai file CSV
+# Vado a leggere i dati dai file CSV
 mdb_prima_esecuzione = pd.read_csv("tempi_di_risposta_prima_esecuzione_MDB.csv")
 mdb_media_30 = pd.read_csv("tempi_di_risposta_media_30_MDB.csv")
 neo4j_prima_esecuzione = pd.read_csv("C:\\Users\\lucac\\PycharmProjects\\pythonProject\\Neo4j\\tempi_di_risposta_prima_esecuzione.csv")
 neo4j_media_30 = pd.read_csv("C:\\Users\\lucac\\PycharmProjects\\pythonProject\\Neo4j\\tempi_di_risposta_media_30.csv")
 
-# Prendi i dati per il confronto della prima esecuzione
+# Prendo i dati per il confronto della prima esecuzione
 mdb_prima_esecuzione_queries = mdb_prima_esecuzione['Query']
 mdb_prima_esecuzione_tempi = mdb_prima_esecuzione['Millisecondi']
 
 neo4j_prima_esecuzione_queries = neo4j_prima_esecuzione['Query']
 neo4j_prima_esecuzione_tempi = neo4j_prima_esecuzione['Millisecondi']
 
-# Prendi i dati per il confronto dei tempi medi e degli intervalli di confidenza
+# Prendo i dati per il confronto dei tempi medi e degli intervalli di confidenza
 mdb_media_30_queries = mdb_media_30['Query']
 mdb_media_30_tempi = mdb_media_30['Media']
 mdb_media_30_intervallo = mdb_media_30['Intervallo di Confidenza']
@@ -53,7 +53,7 @@ index = range(len(mdb_media_30_queries))
 plt.bar(index, mdb_media_30_tempi, bar_width, label='Media MongoDB', alpha=0.7, color=colore_mdb)
 plt.bar([i + bar_width for i in index], neo4j_media_30_tempi, bar_width, label='Media Neo4j', alpha=0.7, color=colore_neo4j)
 
-# Aggiungi gli intervalli di confidenza con i pallini
+# Aggiungo gli intervalli di confidenza con i pallini
 plt.errorbar(
     [i + bar_width / 2 for i in index],
     mdb_media_30_tempi,

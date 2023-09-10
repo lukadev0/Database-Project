@@ -29,10 +29,10 @@ for data_type in data_types:
         # Percorso completo al file CSV
         csv_path = os.path.join(script_directory, csv_filename)
 
-        # Leggi i dati dal file CSV utilizzando pandas
+        # Leggo i dati dal file CSV utilizzando pandas
         data = pd.read_csv(csv_path)
 
-        # Inserisci i dati nel grafo
+        # Inserisco i dati nel grafo
         for index, row in data.iterrows():
             transaction_id = row['transaction_id']
             timestamp = row['timestamp']

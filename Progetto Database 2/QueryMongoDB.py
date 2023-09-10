@@ -31,7 +31,7 @@ tempi_di_risposta_media = {}
 for percentuale in percentuali:
     print(f"\nAnalisi per la percentuale: {percentuale}\n")
 
-    selected_country = 'Italy'  # Cambia con il paese desiderato
+    selected_country = 'Italy'
 
     # Calcolo il tempo medio della prima esecuzione per la prima query
     start_time = time.time()
@@ -39,7 +39,7 @@ for percentuale in percentuali:
     end_time = time.time()
     tempo_prima_esecuzione = round((end_time - start_time) * 1000, 2)
     print(f"Numero totale di transazioni in {selected_country}: {count}")
-    print(f"Tempo di risposta (prima esecuzione - Query 1): {tempo_prima_esecuzione} ms\n")
+    print(f"Tempo di risposta (prima esecuzione - Query 1): {tempo_prima_esecuzione} ms")
 
     # Qui aggiungo il tempo di risposta medio della prima esecuzione al dizionario per la prima query
     tempi_di_risposta_prima_esecuzione[f"{percentuale} - Query 1"] = tempo_prima_esecuzione
@@ -60,7 +60,7 @@ for percentuale in percentuali:
 
     tempi_di_risposta_media[f"{percentuale} - Query 1"] = (tempo_medio_successive, mean, margin_of_error)
 
-    selected_country = 'Italy'  # Cambia con il paese desiderato
+    selected_country = 'Italy'
 
     # Calcolo il tempo medio della prima esecuzione per la seconda query
     start_time = time.time()
@@ -73,7 +73,7 @@ for percentuale in percentuali:
     total_amount = result[0]['total_amount'] if result else 0
     tempo_prima_esecuzione = round((end_time - start_time) * 1000, 2)
     print(f"Totale degli importi delle transazioni fraudolente in {selected_country}: {total_amount}")
-    print(f"Tempo di risposta (prima esecuzione - Query 2): {tempo_prima_esecuzione} ms\n")
+    print(f"Tempo di risposta (prima esecuzione - Query 2): {tempo_prima_esecuzione} ms")
 
     tempi_di_risposta_prima_esecuzione[f"{percentuale} - Query 2"] = tempo_prima_esecuzione
 
@@ -99,9 +99,9 @@ for percentuale in percentuali:
 
     tempi_di_risposta_media[f"{percentuale} - Query 2"] = (tempo_medio_successive, mean_value, margin_of_error)
 
-    selected_username = 'Jennifer Rodgers'  # Qui bisogna cambiare il nome dell'utente desiderato
+    selected_username = 'Heather James'
 
-    # Calcola il tempo medio della prima esecuzione per la terza query
+    # Calcolo il tempo medio della prima esecuzione per la terza query
     start_time = time.time()
     pipeline = [
         {'$match': {'subject': selected_username, 'status': 'sospetta'}},
@@ -112,7 +112,7 @@ for percentuale in percentuali:
     fraudulent_transactions = result[0]['fraudulent_transactions'] if result else 0
     tempo_prima_esecuzione = round((end_time - start_time) * 1000, 2)
     print(f"Numero totale di transazioni fraudolente per l'utente {selected_username}: {fraudulent_transactions}")
-    print(f"Tempo di risposta (prima esecuzione - Query 3): {tempo_prima_esecuzione} ms\n")
+    print(f"Tempo di risposta (prima esecuzione - Query 3): {tempo_prima_esecuzione} ms")
 
     # Aggiungo il tempo di risposta medio della prima esecuzione al dizionario per la terza query
     tempi_di_risposta_prima_esecuzione[f"{percentuale} - Query 3"] = tempo_prima_esecuzione
@@ -144,12 +144,12 @@ for percentuale in percentuali:
     end_time = time.time()
     tempo_prima_esecuzione = round((end_time - start_time) * 1000, 2)
     print(f"Numero totale di transazioni fraudolente nel dataset {percentuale}: {count}")
-    print(f"Tempo di risposta (prima esecuzione - Query 4): {tempo_prima_esecuzione} ms\n")
+    print(f"Tempo di risposta (prima esecuzione - Query 4): {tempo_prima_esecuzione} ms")
 
-    # Aggiungi il tempo di risposta medio della prima esecuzione al dizionario per la quarta query
+    # Aggiungo il tempo di risposta medio della prima esecuzione al dizionario per la quarta query
     tempi_di_risposta_prima_esecuzione[f"{percentuale} - Query 4"] = tempo_prima_esecuzione
 
-    # Calcola il tempo medio delle 30 esecuzioni successive per la quarta query
+    # Calcolo il tempo medio delle 30 esecuzioni successive per la quarta query
     tempi_successivi = []
     for _ in range(30):
         start_time = time.time()
@@ -163,27 +163,27 @@ for percentuale in percentuali:
     print(f"Tempo medio di 30 esecuzioni successive (Query 4): {tempo_medio_successive} ms")
     print(f"Intervallo di Confidenza (Query 4): [{round(mean_value - margin_of_error, 2)}, {round(mean_value + margin_of_error, 2)}] ms\n")
 
-    # Aggiungi il tempo di risposta medio della prima esecuzione al dizionario per la quarta query
+    # Aggiungo il tempo di risposta medio della prima esecuzione al dizionario per la quarta query
     tempi_di_risposta_media[f"{percentuale} - Query 4"] = (tempo_medio_successive, mean_value, margin_of_error)
 
-    print("-" * 60)  # Separatore tra le diverse percentuali
+    print("-" * 70)  # Separatore tra le diverse percentuali
 
-# Scrivi i tempi di risposta medi della prima esecuzione in un file CSV
+# Scrivo i tempi di risposta medi della prima esecuzione in un file CSV
 with open('tempi_di_risposta_prima_esecuzione_MDB.csv', mode='w', newline='') as file:
     writer = csv.writer(file)
     writer.writerow(['Dataset', 'Query', 'Millisecondi'])
 
-    # Scrivi i dati
+    # Scrivo i dati
     for query, tempo_prima_esecuzione in tempi_di_risposta_prima_esecuzione.items():
         dataset, query = query.split(' - ')
         writer.writerow([dataset, query, tempo_prima_esecuzione])
 
-# Scrivi i tempi di risposta medi delle 30 esecuzioni successive in un file CSV
+# Scrivo i tempi di risposta medi delle 30 esecuzioni successive in un file CSV
 with open('tempi_di_risposta_media_30_MDB.csv', mode='w', newline='') as file:
     writer = csv.writer(file)
     writer.writerow(['Dataset', 'Query', 'Millisecondi', 'Media', 'Intervallo di Confidenza'])
 
-    # Scrivi i dati
+    # Scrivo i dati
     for query, (tempo_medio_successive, mean_value, margin_of_error) in tempi_di_risposta_media.items():
         dataset, query = query.split(' - ')
         writer.writerow([dataset, query, tempo_medio_successive, round(mean_value, 2), round(margin_of_error, 2)])

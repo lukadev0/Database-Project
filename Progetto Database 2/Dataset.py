@@ -26,7 +26,7 @@ with open('dataset_frodi.csv', 'w', newline='') as csvfile:
         transaction_type = random.choice(['acquisto', 'prelievo', 'trasferimento'])
         subject = fake.name()
         description = fake.sentence()
-        country = fake.country()  # Genera una nazione casuale
+        country = fake.country()  # vado a una nazione casuale
 
         # Determina se è un caso di frode
         is_fraud = country in european_countries
@@ -40,7 +40,7 @@ with open('dataset_frodi.csv', 'w', newline='') as csvfile:
             'subject': subject,
             'description': description,
             'status': status,
-            'country': country  # Includi il campo "country" con il valore casuale
+            'country': country
         })
 
 print("File CSV 'dataset_frodi.csv' creato con successo.")
