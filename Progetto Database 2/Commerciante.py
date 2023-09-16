@@ -13,8 +13,8 @@ collection_name_100 = 'Commerciante 100%'
 
 
 # Carico il dataset CSV utilizzando pandas
-csv_filename = 'dataset_frodi.csv'     # Il nome del tuo file CSV
-df = pd.read_csv(csv_filename)
+csv_filename = 'dataset_commerciante.csv'
+df = pd.read_csv(csv_filename, encoding='ISO-8859-1')
 
 # Calcolo il numero totale di documenti nel Dataframe
 total_documents = df.shape[0]
