@@ -1,7 +1,6 @@
 import time
 import csv
 import numpy as np
-import scipy.stats as stats
 from py2neo import Graph
 
 # Dizionario per i tempi di risposta medi della prima esecuzione per ogni percentuale
@@ -26,117 +25,178 @@ for percentuale in percentuali:
 
     print(f"\nAnalisi per la percentuale: {percentuale}\n")
 
-    selected_country = 'Italy'
-    selected_username = 'Heather James'
+    selected_country = 'Norway'
+    selected_user_id = 2504  # Sostituisci con l'ID dell'utente desiderato per la seconda query
     dataset_name = f"dataset{percentuale}"
 
-    # Calcolo il tempo medio della prima esecuzione per la prima query
+    # Query 1: Ricerca dei commercianti con un determinato merchant_name
+    print("Query 1:")
+
     start_time = time.time()
-    result = graph.run("MATCH (t:transazioni {country: $country}) RETURN count(t) as num_transactions", country=selected_country)
-    record = result.next()  # Ottengo il record restituito dalla query
+    result = graph.run(
+        "MATCH (c:commerciante {merchant_name: 'Ross-Williams'}) RETURN c.merchant_name AS merchant_name, c.merchant_location AS merchant_location")
+    records = list(result)
     end_time = time.time()
     tempo_prima_esecuzione = round((end_time - start_time) * 1000, 2)
 
-    num_transactions = record['num_transactions']
-    print(f"Numero totale di transazioni in {selected_country}: {num_transactions}\n")
-    tempi_di_risposta_prima_esecuzione[f"{dataset_name} - Query 1"] = tempo_prima_esecuzione
+    if records:
+        for record in records:
+            merchant_name = record['merchant_name']
+            merchant_location = record['merchant_location']
+            print(f"Sede dell'azienda del commerciante {merchant_name}: {merchant_location}\n")
+    else:
+        print(f"Nessun commerciante trovato con il merchant_name cercato.")
+
+    print(f"Tempo di risposta (prima esecuzione - Query 1): {tempo_prima_esecuzione} ms")
+
+    # Salva il tempo di risposta della prima esecuzione nel dizionario
+    tempi_di_risposta_prima_esecuzione[f"{percentuale} - Query 1"] = tempo_prima_esecuzione
 
     # Calcolo il tempo medio delle 30 esecuzioni successive per la prima query
     tempi_successivi = []
     for _ in range(30):
         start_time = time.time()
-        result = graph.run("MATCH (t:transazioni {country: $country}) RETURN count(t) as num_transactions", country=selected_country)
-        record = result.next()  # Ottengo il record restituito dalla query
+        result = graph.run(
+            "MATCH (c:commerciante {merchant_name: 'Ross-Williams'}) RETURN  c.merchant_name AS merchant_name, c.merchant_location AS merchant_location")
+        records = list(result)
         end_time = time.time()
         tempo_esecuzione = round((end_time - start_time) * 1000, 2)
 
-        num_transactions = record['num_transactions']
         tempi_successivi.append(tempo_esecuzione)
 
     tempo_medio_successive = round(sum(tempi_successivi) / len(tempi_successivi), 2)
     mean, interval = calculate_confidence_interval(tempi_successivi)
     tempi_di_risposta_media_intervallo[f"{dataset_name} - Query 1"] = (tempo_medio_successive, mean, interval)
 
-    # Calcolo il tempo medio della prima esecuzione per la seconda query
+    print(f"Tempo medio di 30 esecuzioni successive (Query 1): {tempo_medio_successive} ms")
+    print(f"Intervallo di Confidenza (Query 1): [{round(mean - interval, 2)}, {round(mean + interval, 2)}] ms\n")
+
+    # Query 2: Ricerca della quantità di prodotti con costo superiore a quello selezionato e del prodotto più costoso
+    print("Query 2:")
+
+    selected_amount = 990  # Sostituisci con il costo desiderato
     start_time = time.time()
-    result = graph.run("MATCH (t:transazioni {country: $country, status: 'sospetta'}) RETURN sum(t.amount) as total_amount", country=selected_country)
+    result = graph.run(
+        "MATCH (t:transazioni) WHERE t.amount > $amount RETURN count(t) AS num_transactions, max(t.amount) AS max_amount",
+        amount=selected_amount)
     record = result.next()  # Ottengo il record restituito dalla query
+    max_amount = record['max_amount']
+    num_transactions = record['num_transactions']
     end_time = time.time()
+
     tempo_prima_esecuzione = round((end_time - start_time) * 1000, 2)
 
-    total_amount = record['total_amount']
-    print(f"Totale degli importi delle transazioni fraudolente in {selected_country}: {total_amount}\n")
-    tempi_di_risposta_prima_esecuzione[f"{dataset_name} - Query 2"] = tempo_prima_esecuzione
+    print(f"Numero di transazioni con costo superiore a {selected_amount} euro: {num_transactions}")
+    print(f"Costo massimo tra le transazioni: {max_amount} euro\n")
+    print(f"Tempo di risposta (prima esecuzione - Query 2): {tempo_prima_esecuzione} ms")
 
-    # Calcolo il tempo medio delle 30 esecuzioni successive per la seconda query
+    # Salva il tempo di risposta della prima esecuzione nel dizionario
+    tempi_di_risposta_prima_esecuzione[f"{percentuale} - Query 2"] = tempo_prima_esecuzione
+
+    # Calcolo il tempo medio delle 30 esecuzioni successive per la quarta query
     tempi_successivi = []
     for _ in range(30):
         start_time = time.time()
-        result = graph.run("MATCH (t:transazioni {country: $country, status: 'sospetta'}) RETURN sum(t.amount) as total_amount", country=selected_country)
+        result = graph.run(
+            "MATCH (t:transazioni) WHERE t.amount > $amount RETURN count(t) AS num_transactions, max(t.amount) AS max_amount",
+            amount=selected_amount)
         record = result.next()  # Ottengo il record restituito dalla query
         end_time = time.time()
         tempo_esecuzione = round((end_time - start_time) * 1000, 2)
 
-        total_amount = record['total_amount']
         tempi_successivi.append(tempo_esecuzione)
 
     tempo_medio_successive = round(sum(tempi_successivi) / len(tempi_successivi), 2)
     mean, interval = calculate_confidence_interval(tempi_successivi)
-    tempi_di_risposta_media_intervallo[f"{dataset_name} - Query 2"] = (tempo_medio_successive, mean, interval)
+    tempi_di_risposta_media_intervallo[f"{dataset_name} - Query 4"] = (tempo_medio_successive, mean, interval)
 
-    # Calcolo il tempo medio della prima esecuzione per la terza query
+    print(f"Tempo medio di 30 esecuzioni successive (Query 2): {tempo_medio_successive} ms")
+    print(f"Intervallo di Confidenza (Query 2): [{round(mean - interval, 2)}, {round(mean + interval, 2)}] ms\n")
+
+    # Query 3: Ricerca del numero di commercianti in una determinata nazione
+    print("Query 3:")
+
     start_time = time.time()
-    result = graph.run("MATCH (t:transazioni {subject: $username, status: 'sospetta'}) RETURN count(t) as num_transactions", username=selected_username)
+    result = graph.run("MATCH (c:commerciante) WHERE c.merchant_location = $country RETURN count(c) AS num_merchants",
+                       country=selected_country)
     record = result.next()  # Ottengo il record restituito dalla query
+    num_merchants = record['num_merchants']
     end_time = time.time()
-    tempo_prima_esecuzione = round((end_time - start_time) * 1000, 2)
 
-    num_transactions = record['num_transactions']
-    print(f"Numero totale di transazioni fraudolente per l'utente {selected_username}: {num_transactions}\n")
-    tempi_di_risposta_prima_esecuzione[f"{dataset_name} - Query 3"] = tempo_prima_esecuzione
+    tempo_prima_esecuzione = round((end_time - start_time) * 1000, 2)
+    print(f"Numero totale di commercianti in {selected_country}: {num_merchants}\n")
+    print(f"Tempo di risposta (prima esecuzione - Query 3): {tempo_prima_esecuzione} ms")
+
+    # Salva il tempo di risposta della prima esecuzione nel dizionario
+    tempi_di_risposta_prima_esecuzione[f"{percentuale} - Query 3"] = tempo_prima_esecuzione
 
     # Calcolo il tempo medio delle 30 esecuzioni successive per la terza query
     tempi_successivi = []
     for _ in range(30):
         start_time = time.time()
-        result = graph.run("MATCH (t:transazioni {subject: $username, status: 'sospetta'}) RETURN count(t) as num_transactions", username=selected_username)
+        result = graph.run(
+            "MATCH (c:commerciante) WHERE c.merchant_location = $country RETURN count(c) AS num_merchants",
+            country=selected_country)
         record = result.next()  # Ottengo il record restituito dalla query
         end_time = time.time()
         tempo_esecuzione = round((end_time - start_time) * 1000, 2)
 
-        num_transactions = record['num_transactions']
         tempi_successivi.append(tempo_esecuzione)
 
     tempo_medio_successive = round(sum(tempi_successivi) / len(tempi_successivi), 2)
     mean, interval = calculate_confidence_interval(tempi_successivi)
     tempi_di_risposta_media_intervallo[f"{dataset_name} - Query 3"] = (tempo_medio_successive, mean, interval)
 
-    # Calcolo il tempo medio della prima esecuzione per la quarta query
+    print(f"Tempo medio di 30 esecuzioni successive (Query 3): {tempo_medio_successive} ms")
+    print(f"Intervallo di Confidenza (Query 3): [{round(mean - interval, 2)}, {round(mean + interval, 2)}] ms\n")
+
+    # Query 4: Ricerca del nome e del costo del prodotto associato a un cliente
+
+    print("Query 4:")
+
     start_time = time.time()
-    result = graph.run("MATCH (t:transazioni {status: 'sospetta'}) RETURN count(t) as num_transactions")
-    record = result.next()  # Ottengo il record restituito dalla query
+    result = graph.run(
+        "MATCH(u:utenti {user_id: $user_id})-[:EFFETTUA]->(t:transazioni)-[:CONCERNE]->(p:prodotti) RETURN p.product_name AS product_name, toFloat(t.amount) AS amount",
+        user_id=selected_user_id)
+
+    records = list(result)
     end_time = time.time()
     tempo_prima_esecuzione = round((end_time - start_time) * 1000, 2)
 
-    num_transactions = record['num_transactions']
-    print(f"Numero totale di transazioni fraudolente nel dataset {dataset_name}: {num_transactions}\n")
-    tempi_di_risposta_prima_esecuzione[f"{dataset_name} - Query 4"] = tempo_prima_esecuzione
+    if records:
+        print(f"Prodotti associati all'utente con ID {selected_user_id}:")
+        for record in records:
+            product_name = record['product_name']
+            amount = record['amount']
+            print(f"- Prodotto: {product_name}, Costo: {amount} euro")
+    else:
+        print(f"Nessuna transazione trovata per l'utente con ID {selected_user_id}.")
 
-    # Calcolo il tempo medio delle 30 esecuzioni successive per la quarta query
+    print(f"\nTempo di risposta (prima esecuzione - Query 4): {tempo_prima_esecuzione} ms")
+
+    # Salva il tempo di risposta della prima esecuzione nel dizionario
+    tempi_di_risposta_prima_esecuzione[f"{percentuale} - Query 4"] = tempo_prima_esecuzione
+
+    # Calcolo il tempo medio delle 30 esecuzioni successive per la seconda query
     tempi_successivi = []
     for _ in range(30):
         start_time = time.time()
-        result = graph.run("MATCH (t:transazioni {status: 'sospetta'}) RETURN count(t) as num_transactions")
-        record = result.next()  # Ottengo il record restituito dalla query
+        result = graph.run(
+            "MATCH (u:utenti {user_id: $user_id})-[:EFFETTUA]->(t:transazioni)-[:CONCERNE]->(p:prodotti) RETURN p.product_name AS product_name, toFloat(t.amount) AS amount",
+            user_id=selected_user_id)
+
+        records = list(result)
         end_time = time.time()
         tempo_esecuzione = round((end_time - start_time) * 1000, 2)
 
-        num_transactions = record['num_transactions']
         tempi_successivi.append(tempo_esecuzione)
 
     tempo_medio_successive = round(sum(tempi_successivi) / len(tempi_successivi), 2)
     mean, interval = calculate_confidence_interval(tempi_successivi)
     tempi_di_risposta_media_intervallo[f"{dataset_name} - Query 4"] = (tempo_medio_successive, mean, interval)
+
+    print(f"Tempo medio di 30 esecuzioni successive (Query 4): {tempo_medio_successive} ms")
+    print(f"Intervallo di Confidenza (Query 4): [{round(mean - interval, 2)}, {round(mean + interval, 2)}] ms\n")
 
     print("-" * 70)
 
@@ -146,8 +206,8 @@ with open('tempi_di_risposta_prima_esecuzione.csv', mode='w', newline='') as fil
     writer.writerow(['Dataset', 'Query', 'Millisecondi'])
 
     # Scrivo i dati
-    for query, tempo_prima_esecuzione in tempi_di_risposta_prima_esecuzione.items():
-        dataset, query = query.split(' - ')
+    for key, tempo_prima_esecuzione in tempi_di_risposta_prima_esecuzione.items():
+        dataset, query = key.split(' - ')
         writer.writerow([dataset, query, tempo_prima_esecuzione])
 
 # Scrivo i tempi di risposta medi delle 30 esecuzioni successive in un file CSV
@@ -160,4 +220,5 @@ with open('tempi_di_risposta_media_30.csv', mode='w', newline='') as file:
         dataset, query = query.split(' - ')
         writer.writerow([dataset, query, tempo_medio_successive, round(mean, 2), round(interval, 2)])
 
-print("I tempi di risposta medi sono stati scritti nei file 'tempi_di_risposta_prima_esecuzione.csv' e 'tempi_di_risposta_media_30.csv'.")
+print(
+    "I tempi di risposta medi sono stati scritti nei file 'tempi_di_risposta_prima_esecuzione.csv' e 'tempi_di_risposta_media_30.csv'.")

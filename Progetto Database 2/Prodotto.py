@@ -5,16 +5,16 @@ import random
 # Connessione al database MongoDB
 client = pymongo.MongoClient("mongodb://localhost:27017/")
 db = client["Frodi"]
-collection_name = 'transazioni'
-collection_name_75 = '75%'
-collection_name_50 = '50%'
-collection_name_25 = '25%'
-collection_name_100 = '100%'
+collection_name = 'Prodotto'
+collection_name_75 = 'Prodotto 75%'
+collection_name_50 = 'Prodotto 50%'
+collection_name_25 = 'Prodotto 25%'
+collection_name_100 = 'Prodotto 100%'
 
 
 # Carico il dataset CSV utilizzando pandas
-csv_filename = 'dataset_frodi.csv'     # Il nome del tuo file CSV
-df = pd.read_csv(csv_filename)
+csv_filename = 'dataset_prodotti.csv'
+df = pd.read_csv(csv_filename, encoding='ISO-8859-1')
 
 # Calcolo il numero totale di documenti nel Dataframe
 total_documents = df.shape[0]

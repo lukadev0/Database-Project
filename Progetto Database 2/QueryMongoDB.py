@@ -32,7 +32,7 @@ for percentuale in percentuali:
     print(f"\nAnalisi per la percentuale: {percentuale}\n")
 
     # Query 1: Ricerca dei commercianti con un determinato cognome
-    selected_lastname = 'Schroeder and Sons'
+    selected_lastname = 'Ross-Williams'
     start_time = time.time()
     merchant = db[f'Commerciante {percentuale}'].find_one({'merchant_name': selected_lastname})
     if merchant:
