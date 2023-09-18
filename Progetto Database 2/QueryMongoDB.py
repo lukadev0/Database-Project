@@ -117,7 +117,7 @@ for percentuale in percentuali:
     print(f"Tempo di risposta (prima esecuzione - Query 3): {tempo_prima_esecuzione} ms")
 
     # Aggiungi il tempo di risposta medio della prima esecuzione al dizionario per la seconda query
-    tempi_di_risposta_prima_esecuzione[f"{percentuale} - Query 2"] = tempo_prima_esecuzione
+    tempi_di_risposta_prima_esecuzione[f"{percentuale} - Query 3"] = tempo_prima_esecuzione
 
     # Calcolo il tempo medio delle 30 esecuzioni successive per la seconda query
     tempi_successivi = []
@@ -130,9 +130,8 @@ for percentuale in percentuali:
 
     tempo_medio_successive = round(sum(tempi_successivi) / len(tempi_successivi), 2)
     mean, margin_of_error = calculate_confidence_interval(tempi_successivi)
-    print(f"Tempo medio di 30 esecuzioni successive (Query 2): {tempo_medio_successive} ms")
-    print(
-        f"Intervallo di Confidenza (Query 3): [{round(mean - margin_of_error, 2)}, {round(mean + margin_of_error, 2)}] ms\n")
+    print(f"Tempo medio di 30 esecuzioni successive (Query 3): {tempo_medio_successive} ms")
+    print(f"Intervallo di Confidenza (Query 3): [{round(mean - margin_of_error, 2)}, {round(mean + margin_of_error, 2)}] ms\n")
 
     tempi_di_risposta_media[f"{percentuale} - Query 3"] = (tempo_medio_successive, mean, margin_of_error)
 

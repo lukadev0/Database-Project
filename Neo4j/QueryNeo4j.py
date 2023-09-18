@@ -33,8 +33,7 @@ for percentuale in percentuali:
     print("Query 1:")
 
     start_time = time.time()
-    result = graph.run(
-        "MATCH (c:commerciante {merchant_name: 'Ross-Williams'}) RETURN c.merchant_name AS merchant_name, c.merchant_location AS merchant_location")
+    result = graph.run("MATCH (c:commerciante {merchant_name: 'Ross-Williams'}) RETURN c.merchant_name AS merchant_name, c.merchant_location AS merchant_location")
     records = list(result)
     end_time = time.time()
     tempo_prima_esecuzione = round((end_time - start_time) * 1000, 2)
@@ -56,8 +55,7 @@ for percentuale in percentuali:
     tempi_successivi = []
     for _ in range(30):
         start_time = time.time()
-        result = graph.run(
-            "MATCH (c:commerciante {merchant_name: 'Ross-Williams'}) RETURN  c.merchant_name AS merchant_name, c.merchant_location AS merchant_location")
+        result = graph.run("MATCH (c:commerciante {merchant_name: 'Ross-Williams'}) RETURN  c.merchant_name AS merchant_name, c.merchant_location AS merchant_location")
         records = list(result)
         end_time = time.time()
         tempo_esecuzione = round((end_time - start_time) * 1000, 2)
@@ -76,9 +74,7 @@ for percentuale in percentuali:
 
     selected_amount = 990  # Sostituisci con il costo desiderato
     start_time = time.time()
-    result = graph.run(
-        "MATCH (t:transazioni) WHERE t.amount > $amount RETURN count(t) AS num_transactions, max(t.amount) AS max_amount",
-        amount=selected_amount)
+    result = graph.run("MATCH (t:transazioni) WHERE t.amount > $amount RETURN count(t) AS num_transactions, max(t.amount) AS max_amount", amount=selected_amount)
     record = result.next()  # Ottengo il record restituito dalla query
     max_amount = record['max_amount']
     num_transactions = record['num_transactions']
@@ -97,9 +93,7 @@ for percentuale in percentuali:
     tempi_successivi = []
     for _ in range(30):
         start_time = time.time()
-        result = graph.run(
-            "MATCH (t:transazioni) WHERE t.amount > $amount RETURN count(t) AS num_transactions, max(t.amount) AS max_amount",
-            amount=selected_amount)
+        result = graph.run("MATCH (t:transazioni) WHERE t.amount > $amount RETURN count(t) AS num_transactions, max(t.amount) AS max_amount", amount=selected_amount)
         record = result.next()  # Ottengo il record restituito dalla query
         end_time = time.time()
         tempo_esecuzione = round((end_time - start_time) * 1000, 2)
@@ -108,7 +102,7 @@ for percentuale in percentuali:
 
     tempo_medio_successive = round(sum(tempi_successivi) / len(tempi_successivi), 2)
     mean, interval = calculate_confidence_interval(tempi_successivi)
-    tempi_di_risposta_media_intervallo[f"{dataset_name} - Query 4"] = (tempo_medio_successive, mean, interval)
+    tempi_di_risposta_media_intervallo[f"{dataset_name} - Query 2"] = (tempo_medio_successive, mean, interval)
 
     print(f"Tempo medio di 30 esecuzioni successive (Query 2): {tempo_medio_successive} ms")
     print(f"Intervallo di Confidenza (Query 2): [{round(mean - interval, 2)}, {round(mean + interval, 2)}] ms\n")
@@ -117,8 +111,7 @@ for percentuale in percentuali:
     print("Query 3:")
 
     start_time = time.time()
-    result = graph.run("MATCH (c:commerciante) WHERE c.merchant_location = $country RETURN count(c) AS num_merchants",
-                       country=selected_country)
+    result = graph.run("MATCH (c:commerciante) WHERE c.merchant_location = $country RETURN count(c) AS num_merchants", country=selected_country)
     record = result.next()  # Ottengo il record restituito dalla query
     num_merchants = record['num_merchants']
     end_time = time.time()
@@ -151,14 +144,11 @@ for percentuale in percentuali:
     print(f"Intervallo di Confidenza (Query 3): [{round(mean - interval, 2)}, {round(mean + interval, 2)}] ms\n")
 
     # Query 4: Ricerca del nome e del costo del prodotto associato a un cliente
-
     print("Query 4:")
 
     start_time = time.time()
     result = graph.run(
-        "MATCH(u:utenti {user_id: $user_id})-[:EFFETTUA]->(t:transazioni)-[:CONCERNE]->(p:prodotti) RETURN p.product_name AS product_name, toFloat(t.amount) AS amount",
-        user_id=selected_user_id)
-
+        "MATCH(u:utenti {user_id: $user_id})-[:EFFETTUA]->(t:transazioni)-[:CONCERNE]->(p:prodotti) RETURN p.product_name AS product_name, toFloat(t.amount) AS amount", user_id=selected_user_id)
     records = list(result)
     end_time = time.time()
     tempo_prima_esecuzione = round((end_time - start_time) * 1000, 2)
@@ -206,8 +196,8 @@ with open('tempi_di_risposta_prima_esecuzione.csv', mode='w', newline='') as fil
     writer.writerow(['Dataset', 'Query', 'Millisecondi'])
 
     # Scrivo i dati
-    for key, tempo_prima_esecuzione in tempi_di_risposta_prima_esecuzione.items():
-        dataset, query = key.split(' - ')
+    for query, tempo_prima_esecuzione in tempi_di_risposta_prima_esecuzione.items():
+        dataset, query = query.split(' - ')
         writer.writerow([dataset, query, tempo_prima_esecuzione])
 
 # Scrivo i tempi di risposta medi delle 30 esecuzioni successive in un file CSV
