@@ -1,116 +1,227 @@
-import pandas as pd
-import matplotlib.pyplot as plt
-import re
-import os
+import time
+import csv
+import numpy as np
+from py2neo import Graph
 
-# Specifica i percorsi completi dei file CSV per MongoDB e Neo4j
-mongo_csv_paths = [
-    "C:\\Users\\lucac\\PycharmProjects\\pythonProject\\Progetto Database 2\\tempi_di_risposta_media_30_MDB.csv",
-    "C:\\Users\\lucac\\PycharmProjects\\pythonProject\\Progetto Database 2\\tempi_di_risposta_prima_esecuzione_MDB.csv"
-]
+# Dizionario per i tempi di risposta medi della prima esecuzione per ogni percentuale
+tempi_di_risposta_prima_esecuzione = {}
 
-neo4j_csv_paths = [
-    "C:\\Users\\lucac\\PycharmProjects\\pythonProject\\Neo4j\\tempi_di_risposta_media_30.csv",
-    "C:\\Users\\lucac\\PycharmProjects\\pythonProject\\Neo4j\\tempi_di_risposta_prima_esecuzione.csv"
-]
+# Dizionario per i tempi di risposta medi delle 30 esecuzioni successive per ogni percentuale
+tempi_di_risposta_media_intervallo = {}
 
-# Leggi i dati dai file CSV
-data_mongo = pd.concat(
-    [pd.read_csv(file, sep=',', dtype={'Intervallo di Confidenza (Min, Max)': str}) for file in mongo_csv_paths])
-data_neo4j = pd.concat(
-    [pd.read_csv(file, sep=',', dtype={'Intervallo di Confidenza (Min, Max)': str}) for file in neo4j_csv_paths])
-
-# Lista delle dimensioni del dataset
-dataset_sizes = ['100%', '75%', '50%', '25%']
-
-# Lista delle query
-queries = ['Query 1', 'Query 2', 'Query 3', 'Query 4']
-
-# Definisce i colori per MongoDB e Neo4j
-color_mongo = 'coral'
-color_neo4j = 'purple'
+percentuali = ['100', '75', '50', '25']
 
 
-# Funzione per estrarre i valori minimi e massimi dall'intervallo di confidenza
-def extract_confidence_values(confidence_interval_str):
-    if isinstance(confidence_interval_str, float):
-        # Se il valore è già float, restituiscilo direttamente
-        return confidence_interval_str, confidence_interval_str
-    matches = re.findall(r'\d+\.\d+', confidence_interval_str)
-    return float(matches[0]), float(matches[1])
+def calculate_confidence_interval(data):
+    mean_val = np.mean(data)
+    std_dev = np.std(data)
+    margin_of_error = 1.96 * (std_dev / np.sqrt(len(data)))  # 1.96 è lo z-score per avere l'intervallo di confidenza al 95%
+    return mean_val, margin_of_error
 
 
-# Per ogni query, crea gli istogrammi
-for query in queries:
-    # Filtra i dati per la query corrente
-    data_mongo_query = data_mongo[data_mongo['Query'] == query]
-    data_neo4j_query = data_neo4j[data_neo4j['Query'] == query]
+for percentuale in percentuali:
+    db_name = f"dataset{percentuale}"
+    graph = Graph(f"bolt://localhost:7687/{db_name}", user="neo4j", password="12345678", name=db_name)
 
-    # Crea il primo istogramma con i tempi della prima esecuzione
-    plt.figure(figsize=(10, 6))
-    for size in dataset_sizes:
-        values_mongo = data_mongo_query[data_mongo_query['Dataset'] == size]['Millisecondi']
-        values_neo4j = data_neo4j_query[data_neo4j_query['Dataset'] == size]['Millisecondi']
+    print(f"\nAnalisi per la percentuale: {percentuale}\n")
 
-        plt.bar([f"{size} (MongoDB)", f"{size} (Neo4j)"], [values_mongo.values[0], values_neo4j.values[0]],
-                color=[color_mongo, color_neo4j])
+    selected_country = 'Norway'
+    selected_user_id = 2504  # Sostituisci con l'ID dell'utente desiderato per la seconda query
+    dataset_name = f"{percentuale}%"
 
-    plt.xlabel('Dimensione del Dataset')
-    plt.ylabel('Tempo di esecuzione (ms)')
-    plt.title(f'Istogramma - Tempo della Prima Esecuzione per {query}')
-    plt.legend()
-    plt.tight_layout()
+    # Query 1: Ricerca dei commercianti con un determinato merchant_name
+    print("Query 1:")
 
-    # Salva il grafico come file PNG nella cartella corrente
-    filename = f'Istogramma_Tempo_Prima_Esecuzione_{query}.png'
-    plt.savefig(filename)
+    start_time = time.time()
+    result = graph.run("MATCH (c:commerciante {merchant_name: 'Ross-Williams'}) RETURN c.merchant_name AS merchant_name, c.merchant_location AS merchant_location")
+    records = list(result)
+    end_time = time.time()
+    tempo_prima_esecuzione = round((end_time - start_time) * 1000, 2)
 
-    # Mostra il grafico
-    plt.show()
+    if records:
+        for record in records:
+            merchant_name = record['merchant_name']
+            merchant_location = record['merchant_location']
+            print(f"Sede dell'azienda del commerciante {merchant_name}: {merchant_location}\n")
+    else:
+        print(f"Nessun commerciante trovato con il merchant_name cercato.")
 
-    # Rimuovi il grafico dalla memoria
-    plt.close()
+    print(f"Tempo di risposta (prima esecuzione - Query 1): {tempo_prima_esecuzione} ms")
 
-    # Crea il secondo istogramma con le medie dei tempi
-    plt.figure(figsize=(10, 6))
-    for size in dataset_sizes:
-        values_mongo = data_mongo_query[data_mongo_query['Dataset'] == size]['Media']
-        values_neo4j = data_neo4j_query[data_neo4j_query['Dataset'] == size]['Media']
+    # Salva il tempo di risposta della prima esecuzione nel dizionario
+    tempi_di_risposta_prima_esecuzione[f"{percentuale}% - Query 1"] = tempo_prima_esecuzione
 
-        # Estrae intervalli di confidenza
-        confidence_intervals_mongo = data_mongo_query[data_mongo_query['Dataset'] == size][
-            'Intervallo di Confidenza (Min, Max)']
-        confidence_intervals_neo4j = data_neo4j_query[data_neo4j_query['Dataset'] == size][
-            'Intervallo di Confidenza (Min, Max)']
-        conf_intervals_mongo = [extract_confidence_values(conf_str) for conf_str in confidence_intervals_mongo]
-        conf_intervals_neo4j = [extract_confidence_values(conf_str) for conf_str in confidence_intervals_neo4j]
+    # Calcolo il tempo medio delle 30 esecuzioni successive per la prima query
+    tempi_successivi = []
+    for _ in range(30):
+        start_time = time.time()
+        result = graph.run("MATCH (c:commerciante {merchant_name: 'Ross-Williams'}) RETURN  c.merchant_name AS merchant_name, c.merchant_location AS merchant_location")
+        records = list(result)
+        end_time = time.time()
+        tempo_esecuzione = round((end_time - start_time) * 1000, 2)
 
-        # Estrae valori minimi e massimi dagli intervalli di confidenza
-        conf_mongo_min = [conf[0] for conf in conf_intervals_mongo]
-        conf_mongo_max = [conf[1] for conf in conf_intervals_mongo]
-        conf_neo4j_min = [conf[0] for conf in conf_intervals_neo4j]
-        conf_neo4j_max = [conf[1] for conf in conf_intervals_neo4j]
+        tempi_successivi.append(tempo_esecuzione)
 
-        # Calcola la differenza tra il valore medio e gli estremi dell'intervallo di confidenza
-        mongo_yerr = [[values_mongo.values[0] - conf_mongo_min[0]], [conf_mongo_max[0] - values_mongo.values[0]]]
-        neo4j_yerr = [[values_neo4j.values[0] - conf_neo4j_min[0]], [conf_neo4j_max[0] - values_neo4j.values[0]]]
+    tempo_medio_successive = round(sum(tempi_successivi) / len(tempi_successivi), 2)
+    mean, interval = calculate_confidence_interval(tempi_successivi)
+    tempi_di_risposta_media_intervallo[f"{dataset_name} - Query 1"] = (tempo_medio_successive, mean, interval)
 
-        # Rappresenta l'intervallo di confidenza per MongoDB e Neo4j
-        plt.bar(f"{size} (MongoDB)", values_mongo.values[0], yerr=mongo_yerr, capsize=5, color=color_mongo, label='MongoDB')
-        plt.bar(f"{size} (Neo4j)", values_neo4j.values[0], yerr=neo4j_yerr, capsize=5, color=color_neo4j, label='Neo4j')
+    print(f"Tempo medio di 30 esecuzioni successive (Query 1): {tempo_medio_successive} ms")
+    print(f"Intervallo di Confidenza (Query 1): [{round(mean - interval, 2)}, {round(mean + interval, 2)}] ms\n")
 
-    plt.xlabel('Dimensione del Dataset')
-    plt.ylabel('Tempo di esecuzione medio (ms)')
-    plt.title(f'Istogramma - Tempo di Esecuzione Medio per {query}')
-    plt.legend()
-    plt.tight_layout()
+    # Query 2: Ricerca del numero di commercianti in una determinata nazione
+    print("Query 2:")
 
-    # Salva il grafico come file PNG nella cartella corrente
-    filename = f'Istogramma_Tempo_Esecuzione_Medio_{query}.png'
-    plt.savefig(filename)
+    start_time = time.time()
+    result = graph.run("MATCH (c:commerciante) WHERE c.merchant_location = $country RETURN count(c) AS num_merchants", country=selected_country)
+    record = result.next()  # Ottengo il record restituito dalla query
+    num_merchants = record['num_merchants']
+    end_time = time.time()
 
-    # Mostra il grafico
-    plt.show()
+    tempo_prima_esecuzione = round((end_time - start_time) * 1000, 2)
+    print(f"Numero totale di commercianti in {selected_country}: {num_merchants}\n")
+    print(f"Tempo di risposta (prima esecuzione - Query 2): {tempo_prima_esecuzione} ms")
 
-    # Rimuovi il grafico dalla memoria
-    plt.close()
+    # Salva il tempo di risposta della prima esecuzione nel dizionario
+    tempi_di_risposta_prima_esecuzione[f"{percentuale}% - Query 2"] = tempo_prima_esecuzione
+
+    # Calcolo il tempo medio delle 30 esecuzioni successive per la terza query
+    tempi_successivi = []
+    for _ in range(30):
+        start_time = time.time()
+        result = graph.run("MATCH (c:commerciante) WHERE c.merchant_location = $country RETURN count(c) AS num_merchants", country=selected_country)
+        record = result.next()  # Ottengo il record restituito dalla query
+        end_time = time.time()
+        tempo_esecuzione = round((end_time - start_time) * 1000, 2)
+
+        tempi_successivi.append(tempo_esecuzione)
+
+    tempo_medio_successive = round(sum(tempi_successivi) / len(tempi_successivi), 2)
+    mean, interval = calculate_confidence_interval(tempi_successivi)
+    tempi_di_risposta_media_intervallo[f"{dataset_name} - Query 2"] = (tempo_medio_successive, mean, interval)
+
+    print(f"Tempo medio di 30 esecuzioni successive (Query 2): {tempo_medio_successive} ms")
+    print(f"Intervallo di Confidenza (Query 2): [{round(mean - interval, 2)}, {round(mean + interval, 2)}] ms\n")
+
+    # Query 3: Ricerca del nome e del costo del prodotto associato a un cliente
+    print("Query 3:")
+
+    start_time = time.time()
+    result = graph.run("MATCH(u:utenti {user_id: $user_id})-[:EFFETTUA]->(t:transazioni)-[:CONCERNE]->(p:prodotti) RETURN p.product_name AS product_name, toFloat(t.amount) AS amount", user_id=selected_user_id)
+    records = list(result)
+    end_time = time.time()
+    tempo_prima_esecuzione = round((end_time - start_time) * 1000, 2)
+
+    if records:
+        print(f"Prodotti associati all'utente con ID {selected_user_id}:")
+        for record in records:
+            product_name = record['product_name']
+            amount = record['amount']
+            print(f"- Prodotto: {product_name}, Costo: {amount} euro")
+    else:
+        print(f"Nessuna transazione trovata per l'utente con ID {selected_user_id}.")
+
+    print(f"\nTempo di risposta (prima esecuzione - Query 3): {tempo_prima_esecuzione} ms")
+
+    # Salva il tempo di risposta della prima esecuzione nel dizionario
+    tempi_di_risposta_prima_esecuzione[f"{percentuale}% - Query 3"] = tempo_prima_esecuzione
+
+    # Calcolo il tempo medio delle 30 esecuzioni successive per la seconda query
+    tempi_successivi = []
+    for _ in range(30):
+        start_time = time.time()
+        result = graph.run("MATCH (u:utenti {user_id: $user_id})-[:EFFETTUA]->(t:transazioni)-[:CONCERNE]->(p:prodotti) RETURN p.product_name AS product_name, toFloat(t.amount) AS amount", user_id=selected_user_id)
+
+        records = list(result)
+        end_time = time.time()
+        tempo_esecuzione = round((end_time - start_time) * 1000, 2)
+
+        tempi_successivi.append(tempo_esecuzione)
+
+    tempo_medio_successive = round(sum(tempi_successivi) / len(tempi_successivi), 2)
+    mean, interval = calculate_confidence_interval(tempi_successivi)
+    tempi_di_risposta_media_intervallo[f"{dataset_name} - Query 3"] = (tempo_medio_successive, mean, interval)
+
+    print(f"Tempo medio di 30 esecuzioni successive (Query 3): {tempo_medio_successive} ms")
+    print(f"Intervallo di Confidenza (Query 3): [{round(mean - interval, 2)}, {round(mean + interval, 2)}] ms\n")
+
+    # Query 4: Ricerca della quantità di prodotti con costo superiore a quello selezionato e del prodotto più costoso
+    print("Query 4:")
+
+    selected_amount = 990  # Sostituisci con il costo desiderato
+    start_time = time.time()
+    result = graph.run("""
+        MATCH (t:transazioni)-[:CONCERNE]->(p:prodotti)
+        WHERE t.amount > $amount
+        WITH t, p
+        ORDER BY t.amount DESC
+        LIMIT 1
+        RETURN count(t) AS num_transactions, max(t.amount) AS max_amount, p.product_name AS most_expensive_product
+        """, amount=selected_amount)
+
+    record = result.next()  # Ottengo il record restituito dalla query
+    max_amount = record['max_amount']
+    num_transactions = record['num_transactions']
+    most_expensive_product = record['most_expensive_product']
+    end_time = time.time()
+
+    tempo_prima_esecuzione = round((end_time - start_time) * 1000, 2)
+
+    print(f"Numero di transazioni con costo superiore a {selected_amount} euro: {num_transactions}")
+    print(f"Prodotto più costoso tra le transazioni: {most_expensive_product} - {max_amount} euro\n")
+    print(f"Tempo di risposta (prima esecuzione - Query 4): {tempo_prima_esecuzione} ms")
+
+    # Salva il tempo di risposta della prima esecuzione nel dizionario
+    tempi_di_risposta_prima_esecuzione[f"{percentuale}% - Query 4"] = tempo_prima_esecuzione
+
+    # Calcolo il tempo medio delle 30 esecuzioni successive per la quarta query
+    tempi_successivi = []
+    for _ in range(30):
+        start_time = time.time()
+        result = graph.run("""
+                MATCH (t:transazioni)-[:CONCERNE]->(p:prodotti)
+                WHERE t.amount > $amount
+                WITH t, p
+                ORDER BY t.amount DESC
+                LIMIT 1
+                RETURN count(t) AS num_transactions, max(t.amount) AS max_amount, p.product_name AS most_expensive_product
+                """, amount=selected_amount)
+        record = result.next()  # Ottengo il record restituito dalla query
+        end_time = time.time()
+        tempo_esecuzione = round((end_time - start_time) * 1000, 2)
+
+        tempi_successivi.append(tempo_esecuzione)
+
+    tempo_medio_successive = round(sum(tempi_successivi) / len(tempi_successivi), 2)
+    mean, interval = calculate_confidence_interval(tempi_successivi)
+    tempi_di_risposta_media_intervallo[f"{dataset_name} - Query 4"] = (tempo_medio_successive, mean, interval)
+
+    print(f"Tempo medio di 30 esecuzioni successive (Query 4): {tempo_medio_successive} ms")
+    print(f"Intervallo di Confidenza (Query 4): [{round(mean - interval, 2)}, {round(mean + interval, 2)}] ms\n")
+
+    print("-" * 70)
+
+# Scrivo i tempi di risposta medi della prima esecuzione in un file CSV
+with open('tempi_di_risposta_prima_esecuzione.csv', mode='w', newline='') as file:
+    writer = csv.writer(file)
+    writer.writerow(['Dataset', 'Query', 'Millisecondi'])
+
+    # Scrivo i dati
+    for query, tempo_prima_esecuzione in tempi_di_risposta_prima_esecuzione.items():
+        dataset, query = query.split(' - ')
+        writer.writerow([dataset, query, tempo_prima_esecuzione])
+
+# Scrivo i tempi di risposta medi delle 30 esecuzioni successive in un file CSV
+with open('tempi_di_risposta_media_30.csv', mode='w', newline='') as file:
+    writer = csv.writer(file)
+    writer.writerow(['Dataset', 'Query', 'Millisecondi', 'Media', 'Intervallo di Confidenza (Min, Max)'])
+
+    # Scrivo i dati
+    for query, (tempo_medio_successive, mean, interval) in tempi_di_risposta_media_intervallo.items():
+        dataset, query = query.split(' - ')
+        min_interval = round(mean - interval, 2)
+        max_interval = round(mean + interval, 2)
+        intervallo_di_confidenza = (min_interval, max_interval)  # Creo una tupla con minimo e massimo
+        writer.writerow([dataset, query, tempo_medio_successive, round(mean, 2), intervallo_di_confidenza])
+
+print("I tempi di risposta medi sono stati scritti nei file 'tempi_di_risposta_prima_esecuzione.csv' e 'tempi_di_risposta_media_30.csv'.")

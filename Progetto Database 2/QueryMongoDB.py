@@ -71,7 +71,7 @@ for percentuale in percentuali:
     print(f"Numero di commercianti in {selected_country}: {count}")
     print(f"Tempo di risposta (prima esecuzione - Query 2): {tempo_prima_esecuzione} ms")
 
-    # Aggiungi il tempo di risposta medio della prima esecuzione al dizionario per la seconda query
+    # Aggiungo il tempo di risposta medio della prima esecuzione al dizionario per la seconda query
     tempi_di_risposta_prima_esecuzione[f"{percentuale} - Query 2"] = tempo_prima_esecuzione
 
     # Calcolo il tempo medio delle 30 esecuzioni successive per la seconda query
@@ -108,7 +108,7 @@ for percentuale in percentuali:
     tempo_prima_esecuzione = round((end_time - start_time) * 1000, 2)
     print(f"Tempo di risposta (prima esecuzione - Query 3): {tempo_prima_esecuzione} ms")
 
-    # Aggiungi il tempo di risposta medio della prima esecuzione al dizionario per la terza query
+    # Aggiungo il tempo di risposta medio della prima esecuzione al dizionario per la terza query
     tempi_di_risposta_prima_esecuzione[f"{percentuale} - Query 3"] = tempo_prima_esecuzione
 
     # Calcolo il tempo medio delle 30 esecuzioni successive per la terza query

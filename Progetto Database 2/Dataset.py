@@ -48,7 +48,7 @@ with open('dataset_utenti.csv', 'w', newline='') as csvfile:
             'user_email': user_email,
             'user_address': user_address,
         })
-        used_user_ids.add(user_id)  # Aggiungi user_id alla lista degli ID già assegnati
+        used_user_ids.add(user_id)  # Aggiungo user_id alla lista degli ID già assegnati
 
 print("File CSV 'dataset_utenti.csv' creato con successo.")
 
@@ -92,7 +92,7 @@ with open('dataset_prodotti.csv', 'w', newline='') as csvfile:
             'amount': amount,
             'product_quantity': product_quantity,
         })
-        used_product_ids.add(product_id)  # Aggiungi product_id alla lista degli ID già assegnati
+        used_product_ids.add(product_id)
 
 print("File CSV 'dataset_prodotti.csv' creato con successo.")
 

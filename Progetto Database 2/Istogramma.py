@@ -1,6 +1,7 @@
 import pandas as pd
 import matplotlib.pyplot as plt
 import re
+import os
 
 # Specifica i percorsi completi dei file CSV per MongoDB e Neo4j
 mongo_csv_paths = [
@@ -14,9 +15,10 @@ neo4j_csv_paths = [
 ]
 
 # Leggi i dati dai file CSV
-data_mongo = pd.concat([pd.read_csv(file, sep=',', dtype={'Intervallo di Confidenza (Min, Max)': str}) for file in mongo_csv_paths])
-data_neo4j = pd.concat([pd.read_csv(file, sep=',', dtype={'Intervallo di Confidenza (Min, Max)': str}) for file in neo4j_csv_paths])
-
+data_mongo = pd.concat(
+    [pd.read_csv(file, sep=',', dtype={'Intervallo di Confidenza (Min, Max)': str}) for file in mongo_csv_paths])
+data_neo4j = pd.concat(
+    [pd.read_csv(file, sep=',', dtype={'Intervallo di Confidenza (Min, Max)': str}) for file in neo4j_csv_paths])
 
 # Lista delle dimensioni del dataset
 dataset_sizes = ['100%', '75%', '50%', '25%']
@@ -58,7 +60,16 @@ for query in queries:
     plt.title(f'Istogramma - Tempo della Prima Esecuzione per {query}')
     plt.legend()
     plt.tight_layout()
+
+    # Salva il grafico come file PNG nella cartella corrente
+    filename = f'Istogramma_Tempo_Prima_Esecuzione_{query}.png'
+    plt.savefig(filename)
+
+    # Mostra il grafico
     plt.show()
+
+    # Rimuovi il grafico dalla memoria
+    plt.close()
 
     # Crea il secondo istogramma con le medie dei tempi
     plt.figure(figsize=(10, 6))
@@ -67,8 +78,10 @@ for query in queries:
         values_neo4j = data_neo4j_query[data_neo4j_query['Dataset'] == size]['Media']
 
         # Estrae intervalli di confidenza
-        confidence_intervals_mongo = data_mongo_query[data_mongo_query['Dataset'] == size]['Intervallo di Confidenza (Min, Max)']
-        confidence_intervals_neo4j = data_neo4j_query[data_neo4j_query['Dataset'] == size]['Intervallo di Confidenza (Min, Max)']
+        confidence_intervals_mongo = data_mongo_query[data_mongo_query['Dataset'] == size][
+            'Intervallo di Confidenza (Min, Max)']
+        confidence_intervals_neo4j = data_neo4j_query[data_neo4j_query['Dataset'] == size][
+            'Intervallo di Confidenza (Min, Max)']
         conf_intervals_mongo = [extract_confidence_values(conf_str) for conf_str in confidence_intervals_mongo]
         conf_intervals_neo4j = [extract_confidence_values(conf_str) for conf_str in confidence_intervals_neo4j]
 
@@ -78,7 +91,7 @@ for query in queries:
         conf_neo4j_min = [conf[0] for conf in conf_intervals_neo4j]
         conf_neo4j_max = [conf[1] for conf in conf_intervals_neo4j]
 
-        # Calcola la differenza tra il valore medio e gli estremi dell'intervallo di confidenza
+        # Calcolo la differenza tra il valore medio e gli estremi dell'intervallo di confidenza
         mongo_yerr = [[values_mongo.values[0] - conf_mongo_min[0]], [conf_mongo_max[0] - values_mongo.values[0]]]
         neo4j_yerr = [[values_neo4j.values[0] - conf_neo4j_min[0]], [conf_neo4j_max[0] - values_neo4j.values[0]]]
 
@@ -91,4 +104,13 @@ for query in queries:
     plt.title(f'Istogramma - Tempo di Esecuzione Medio per {query}')
     plt.legend()
     plt.tight_layout()
+
+    # Salva il grafico come file PNG nella cartella corrente
+    filename = f'Istogramma_Tempo_Esecuzione_Medio_{query}.png'
+    plt.savefig(filename)
+
+    # Mostra il grafico
     plt.show()
+
+    # Rimuovi il grafico dalla memoria
+    plt.close()
