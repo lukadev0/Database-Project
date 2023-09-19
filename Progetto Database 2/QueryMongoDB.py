@@ -141,7 +141,7 @@ for percentuale in percentuali:
     products_above_selected_amount = list(db[f'Prodotto {percentuale}'].find({'amount': {'$gt': selected_amount}}))
     count_products_above_selected_amount = len(products_above_selected_amount)
 
-    # Trova il prodotto più costoso
+    # Trovo il prodotto più costoso
     most_expensive_product = db[f'Prodotto {percentuale}'].find_one({'amount': {'$gt': selected_amount}}, sort=[('amount', -1)])
     end_time = time.time()
     tempo_prima_esecuzione = round((end_time - start_time) * 1000, 2)
@@ -154,7 +154,6 @@ for percentuale in percentuali:
 
     print(f"Tempo di risposta (prima esecuzione - Query 4): {tempo_prima_esecuzione} ms")
 
-    # Aggiungi il tempo di risposta medio della prima esecuzione al dizionario per la quarta query
     tempi_di_risposta_prima_esecuzione[f"{percentuale} - Query 4"] = tempo_prima_esecuzione
 
     # Calcolo il tempo medio delle 30 esecuzioni successive per la quarta query
