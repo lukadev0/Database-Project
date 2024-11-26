@@ -27,13 +27,13 @@ csv_files = [
     "dataset_transazioni.csv"
 ]
 
-# Importa i dati dai file CSV nei grafi Neo4j e crea le relazioni
+# Importo i dati dai file CSV nei grafi Neo4j e crea le relazioni
 for csv_file in csv_files:
     for percentage, graph in graphs_by_percentage.items():
         # Percorso completo al file CSV
         csv_path = os.path.join(csv_directory, csv_file)
 
-        # Leggi i dati dal file CSV utilizzando pandas
+        # Lettura dei dati dal file CSV utilizzando pandas
         data = pd.read_csv(csv_path, encoding='ISO-8859-1', dtype={'transaction_id': int, 'user_id': int, 'merchant_id': int, 'product_id': int, 'amount': float})
 
         # Calcola il numero di righe da inserire per la percentuale specifica
@@ -48,21 +48,21 @@ for csv_file in csv_files:
             graph.create(node)
 
             if "transazioni" in csv_file:
-                # Crea relazione con utente mittente
+                # Creazione relazione con utente mittente
                 user_id = int(row['user_id'])
                 user_node = graph.nodes.match('utenti', user_id=user_id).first()
                 if user_node:
                     transaction_to_user = Relationship(user_node, 'EFFETTUA', node)
                     graph.create(transaction_to_user)
 
-                # Crea relazione con prodotto
+                # Creazione relazione con prodotto
                 product_id = int(row['product_id'])
                 product_node = graph.nodes.match('prodotti', product_id=product_id).first()
                 if product_node:
                     transaction_to_product = Relationship(node, 'CONCERNE', product_node)
                     graph.create(transaction_to_product)
 
-                # Crea relazione con commerciante
+                # Creazione relazione con commerciante
                 merchant_id = int(row['merchant_id'])
                 merchant_node = graph.nodes.match('commerciante', merchant_id=merchant_id).first()
                 if merchant_node:
