@@ -20,7 +20,7 @@ product_names = ['palla', 'cellulare', 'computer', 'libro', 'orologio', 'scarpe'
                  'Tavolo da gioco', 'Kit per il trucco', 'Cuscino memory foam', 'Pantofole da casa', 'Videoproiettore HD', 'Valigia rigida',
                  'Lavastoviglie', 'Vino rosso pregiato', 'Smartwatch']
 
-# Definizione delle costanti
+
 NUM_UTENTI = 10000
 NUM_COMMERCIANTI = 10000
 NUM_PRODOTTI = 10000
@@ -52,7 +52,7 @@ with open('dataset_utenti.csv', 'w', newline='') as csvfile:
 
 print("File CSV 'dataset_utenti.csv' creato con successo.")
 
-# Creazione della collezione 'Commercianti'
+
 with open('dataset_commerciante.csv', 'w', newline='') as csvfile:
     fieldnames = ['merchant_id', 'merchant_name', 'merchant_category', 'merchant_location', 'merchant_description']
     writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
@@ -75,7 +75,7 @@ with open('dataset_commerciante.csv', 'w', newline='') as csvfile:
 
 print("File CSV 'dataset_commerciante.csv' creato con successo.")
 
-# Creazione della collezione 'Prodotti'
+
 with open('dataset_prodotti.csv', 'w', newline='') as csvfile:
     fieldnames = ['product_id', 'product_name', 'amount', 'product_quantity']
     writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
@@ -96,7 +96,7 @@ with open('dataset_prodotti.csv', 'w', newline='') as csvfile:
 
 print("File CSV 'dataset_prodotti.csv' creato con successo.")
 
-# Creazione della collezione 'Transazioni'
+
 with open('dataset_transazioni.csv', 'w', newline='') as csvfile:
     fieldnames = ['transaction_id', 'user_id', 'merchant_id', 'product_id', 'amount']
     writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
